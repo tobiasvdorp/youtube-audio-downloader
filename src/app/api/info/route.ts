@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { exec } from "child_process";
 import { promisify } from "util";
+import { formatDuration } from "@/lib/utils";
 
 const execAsync = promisify(exec);
 
@@ -10,12 +11,6 @@ type YtDlpInfo = {
   duration: number;
   thumbnail: string;
 };
-
-function formatDuration(seconds: number): string {
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = Math.floor(seconds % 60);
-  return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
-}
 
 export async function POST(request: NextRequest) {
   try {

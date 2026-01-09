@@ -1,12 +1,19 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
+import { useDebounceValue } from "usehooks-ts";
+import { list } from "radash";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Progress } from "@/components/ui/progress";
-import { cn } from "@/lib/utils";
+import {
+  cn,
+  base64ToBlob,
+  isValidYoutubeUrl,
+  triggerDownload,
+} from "@/lib/utils";
 import type {
   DownloadFormat,
   VideoInfo,
@@ -28,68 +35,46 @@ type DownloadFormProps = {
 
 export function DownloadForm({ className }: DownloadFormProps) {
   const [url, setUrl] = useState("");
+  const [debouncedUrl] = useDebounceValue(url, 500);
   const [format, setFormat] = useState<DownloadFormat>("mp3");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null);
   const [fetchingInfo, setFetchingInfo] = useState(false);
   const [progress, setProgress] = useState<DownloadProgress | null>(null);
-  const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
-  const isValidYoutubeUrl = (testUrl: string) => {
-    const regex =
-      /^(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|shorts\/)|youtu\.be\/)/;
-    return regex.test(testUrl);
-  };
-
-  const fetchVideoInfo = async (videoUrl: string) => {
-    if (!isValidYoutubeUrl(videoUrl)) {
+  // Fetch video info when debounced URL changes
+  useEffect(() => {
+    if (!debouncedUrl || !isValidYoutubeUrl(debouncedUrl)) {
       setVideoInfo(null);
       return;
     }
 
-    setFetchingInfo(true);
-    try {
-      const response = await fetch("/api/info", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: videoUrl }),
-      });
+    const fetchVideoInfo = async () => {
+      setFetchingInfo(true);
+      try {
+        const response = await fetch("/api/info", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: debouncedUrl }),
+        });
 
-      if (response.ok) {
-        const data = await response.json();
-        setVideoInfo(data);
-        setError(null);
-      } else {
+        if (response.ok) {
+          const data = await response.json();
+          setVideoInfo(data);
+          setError(null);
+        } else {
+          setVideoInfo(null);
+        }
+      } catch {
         setVideoInfo(null);
-      }
-    } catch {
-      setVideoInfo(null);
-    } finally {
-      setFetchingInfo(false);
-    }
-  };
-
-  // Debounced video info fetch
-  useEffect(() => {
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
-    }
-
-    if (url) {
-      debounceRef.current = setTimeout(() => {
-        fetchVideoInfo(url);
-      }, 500);
-    } else {
-      setVideoInfo(null);
-    }
-
-    return () => {
-      if (debounceRef.current) {
-        clearTimeout(debounceRef.current);
+      } finally {
+        setFetchingInfo(false);
       }
     };
-  }, [url]);
+
+    fetchVideoInfo();
+  }, [debouncedUrl]);
 
   const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUrl(e.target.value);
@@ -145,24 +130,11 @@ export function DownloadForm({ className }: DownloadFormProps) {
             setProgress(data);
 
             if (data.type === "complete" && data.data) {
-              // Convert base64 to blob and download
-              const binaryString = atob(data.data);
-              const bytes = new Uint8Array(binaryString.length);
-              for (let i = 0; i < binaryString.length; i++) {
-                bytes[i] = binaryString.charCodeAt(i);
-              }
-              const blob = new Blob([bytes], {
-                type: data.contentType || "audio/mpeg",
-              });
-
-              const downloadUrl = window.URL.createObjectURL(blob);
-              const a = document.createElement("a");
-              a.href = downloadUrl;
-              a.download = data.filename || `audio.${format}`;
-              document.body.appendChild(a);
-              a.click();
-              window.URL.revokeObjectURL(downloadUrl);
-              document.body.removeChild(a);
+              const blob = base64ToBlob(
+                data.data,
+                data.contentType || "audio/mpeg"
+              );
+              triggerDownload(blob, data.filename || `audio.${format}`);
             }
 
             if (data.type === "error") {
@@ -172,9 +144,7 @@ export function DownloadForm({ className }: DownloadFormProps) {
         }
       }
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "An error occurred"
-      );
+      setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setIsLoading(false);
       // Reset progress after a short delay
@@ -300,7 +270,7 @@ export function DownloadForm({ className }: DownloadFormProps) {
           {isLoading ? (
             <div className="flex items-center gap-3">
               <div className="flex items-end gap-1 h-6">
-                {[...Array(5)].map((_, i) => (
+                {list(0, 4).map((i) => (
                   <div
                     key={i}
                     className="w-1 bg-primary-foreground rounded-full wave-bar"

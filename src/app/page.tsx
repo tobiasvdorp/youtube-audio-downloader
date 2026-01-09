@@ -1,4 +1,5 @@
 import { DownloadForm } from "@/components/download-form";
+import { WaveBars } from "@/components/wave-bars";
 
 export default function Home() {
   return (
@@ -11,30 +12,8 @@ export default function Home() {
       </div>
 
       {/* Audio wave decoration */}
-      <div className="absolute left-8 top-1/2 -translate-y-1/2 flex items-end gap-1.5 opacity-20">
-        {[40, 65, 85, 55, 75, 45, 90, 60, 70, 50].map((height, i) => (
-          <div
-            key={i}
-            className="w-1.5 bg-primary rounded-full wave-bar"
-            style={{
-              height: `${height}px`,
-              animationDelay: `${i * 0.1}s`,
-            }}
-          />
-        ))}
-      </div>
-      <div className="absolute right-8 top-1/2 -translate-y-1/2 flex items-end gap-1.5 opacity-20">
-        {[50, 70, 60, 90, 45, 75, 55, 85, 65, 40].map((height, i) => (
-          <div
-            key={i}
-            className="w-1.5 bg-accent rounded-full wave-bar"
-            style={{
-              height: `${height}px`,
-              animationDelay: `${i * 0.1}s`,
-            }}
-          />
-        ))}
-      </div>
+      <WaveBars variant="left" />
+      <WaveBars variant="right" />
 
       {/* Main content */}
       <div className="w-full max-w-2xl space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
