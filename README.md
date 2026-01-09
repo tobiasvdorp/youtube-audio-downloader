@@ -1,36 +1,53 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Beats Downloader
 
-## Getting Started
+A simple, no-nonsense YouTube audio downloader. Paste a link, pick a format, download your audio.
 
-First, run the development server:
+## Why?
+
+My friends and I were tired of those shady YouTube-to-MP3 websites — you know, the ones plastered with sketchy ads, fake download buttons, and popups that make you question your life choices. Half the time they don't even work. So I built this simple tool for us to use instead.
+
+## Features
+
+- Download YouTube audio in **MP3** or **WAV** format
+- Real-time download progress
+- Video preview before downloading
+- Clean, modern UI
+- No ads, no tracking, no BS
+
+## Quick Start
+
+### Using Docker (recommended)
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+docker compose up --build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The app will be available at `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Local Development
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+**Prerequisites:**
 
-## Learn More
+- Node.js 20+
+- pnpm
+- ffmpeg
+- yt-dlp
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+# Install dependencies
+pnpm install
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Run development server
+pnpm dev
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Tech Stack
 
-## Deploy on Vercel
+- Next.js 16
+- React 19
+- Tailwind CSS
+- yt-dlp + ffmpeg for audio extraction
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## License
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Do whatever you want with it.
