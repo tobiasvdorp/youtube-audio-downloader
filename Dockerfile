@@ -37,8 +37,9 @@ COPY --from=builder /app/public ./public
 
 # Set environment variables
 ENV NODE_ENV=production
-ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
 
-EXPOSE 3000
+# Render.com injects PORT env variable (default 10000)
+EXPOSE 10000
 
 CMD ["node", "server.js"]
