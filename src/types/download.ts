@@ -1,8 +1,8 @@
-export type AudioFormat = "mp3" | "wav" | "m4a" | "webm";
+export type DownloadFormat = "mp3" | "wav";
 
 export type DownloadRequest = {
   url: string;
-  format: AudioFormat;
+  format: DownloadFormat;
 };
 
 export type DownloadResponse = {

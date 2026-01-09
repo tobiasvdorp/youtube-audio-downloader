@@ -4,7 +4,7 @@ import { promisify } from "util";
 import { readFile, unlink, mkdir } from "fs/promises";
 import { join } from "path";
 import { randomUUID } from "crypto";
-import type { AudioFormat, DownloadProgress } from "@/types/download";
+import type { DownloadFormat, DownloadProgress } from "@/types/download";
 
 const execAsync = promisify(exec);
 
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { url, format } = body as { url: string; format: AudioFormat };
+    const { url, format } = body as { url: string; format: DownloadFormat };
 
     if (!url) {
       return new Response(
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!format || !["mp3", "wav", "m4a", "webm"].includes(format)) {
+    if (!format || !["mp3", "wav"].includes(format)) {
       return new Response(
         JSON.stringify({ type: "error", error: "Ongeldig formaat" }),
         { status: 400, headers: { "Content-Type": "application/json" } }
@@ -82,11 +82,9 @@ export async function POST(request: NextRequest) {
     const filename = `${title}.${format}`;
     const outputPath = `${tempPath}.${format}`;
 
-    const contentTypes: Record<AudioFormat, string> = {
+    const contentTypes: Record<DownloadFormat, string> = {
       mp3: "audio/mpeg",
       wav: "audio/wav",
-      m4a: "audio/mp4",
-      webm: "audio/webm",
     };
     const contentType = contentTypes[format];
 
@@ -113,7 +111,7 @@ export async function POST(request: NextRequest) {
               format,
               "--audio-quality",
               "0",
-              "--newline", // Force progress on new lines
+              "--newline",
               "-o",
               `${tempPath}.%(ext)s`,
               url,
@@ -186,8 +184,6 @@ export async function POST(request: NextRequest) {
           // Clean up on error
           await unlink(`${tempPath}.mp3`).catch(() => {});
           await unlink(`${tempPath}.wav`).catch(() => {});
-          await unlink(`${tempPath}.m4a`).catch(() => {});
-          await unlink(`${tempPath}.webm`).catch(() => {});
 
           sendProgress({
             type: "error",

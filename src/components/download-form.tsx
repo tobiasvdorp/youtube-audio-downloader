@@ -8,20 +8,18 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import type {
-  AudioFormat,
+  DownloadFormat,
   VideoInfo,
   DownloadProgress,
 } from "@/types/download";
 
 const FORMAT_OPTIONS: {
-  value: AudioFormat;
+  value: DownloadFormat;
   label: string;
   description: string;
 }[] = [
   { value: "mp3", label: "MP3", description: "Universeel, klein bestand" },
   { value: "wav", label: "WAV", description: "Lossless, groot bestand" },
-  { value: "m4a", label: "M4A", description: "AAC, hoge kwaliteit" },
-  { value: "webm", label: "WEBM", description: "Opus, beste kwaliteit" },
 ];
 
 type DownloadFormProps = {
@@ -30,7 +28,7 @@ type DownloadFormProps = {
 
 export function DownloadForm({ className }: DownloadFormProps) {
   const [url, setUrl] = useState("");
-  const [format, setFormat] = useState<AudioFormat>("mp3");
+  const [format, setFormat] = useState<DownloadFormat>("mp3");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null);
@@ -241,7 +239,7 @@ export function DownloadForm({ className }: DownloadFormProps) {
         </label>
         <RadioGroup
           value={format}
-          onValueChange={(value) => setFormat(value as AudioFormat)}
+          onValueChange={(value) => setFormat(value as DownloadFormat)}
           className="grid grid-cols-2 gap-3"
         >
           {FORMAT_OPTIONS.map((option) => (
