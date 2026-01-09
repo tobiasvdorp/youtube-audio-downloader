@@ -6,6 +6,7 @@ import { useDebounceValue } from "usehooks-ts";
 import { list } from "radash";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -156,12 +157,7 @@ export function DownloadForm({ className }: DownloadFormProps) {
     <div className={cn("w-full max-w-2xl space-y-8", className)}>
       {/* URL Input */}
       <div className="space-y-3">
-        <label
-          htmlFor="url-input"
-          className="text-sm font-medium text-muted-foreground"
-        >
-          YouTube URL
-        </label>
+        <Label htmlFor="url-input">YouTube URL</Label>
         <div className="relative">
           <Input
             id="url-input"
@@ -169,7 +165,7 @@ export function DownloadForm({ className }: DownloadFormProps) {
             placeholder="https://www.youtube.com/watch?v=..."
             value={url}
             onChange={handleUrlChange}
-            className="h-14 bg-secondary/50 border-border/50 text-lg placeholder:text-muted-foreground/50 focus:border-primary/50 focus:ring-primary/20 transition-all pr-12"
+            className="pr-12"
           />
           {fetchingInfo && (
             <div className="absolute right-4 top-1/2 -translate-y-1/2">
@@ -204,9 +200,7 @@ export function DownloadForm({ className }: DownloadFormProps) {
 
       {/* Format Selection */}
       <div className="space-y-3">
-        <label className="text-sm font-medium text-muted-foreground">
-          Format
-        </label>
+        <Label>Format</Label>
         <RadioGroup
           value={format}
           onValueChange={(value) => setFormat(value as DownloadFormat)}
