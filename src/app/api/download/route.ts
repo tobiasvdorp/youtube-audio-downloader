@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
 
     // Get video title first
     const { stdout: infoJson } = await execAsync(
-      `yt-dlp --dump-json --no-download "${url}"`,
+      `yt-dlp --js-runtimes nodejs --dump-json --no-download "${url}"`,
       { maxBuffer: 10 * 1024 * 1024 }
     );
     const info = JSON.parse(infoJson);
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     const outputPath = `${tempPath}.${format}`;
 
     await execAsync(
-      `yt-dlp -f bestaudio --extract-audio --audio-format ${format} --audio-quality 0 -o "${tempPath}.%(ext)s" "${url}"`,
+      `yt-dlp --js-runtimes nodejs -f bestaudio --extract-audio --audio-format ${format} --audio-quality 0 -o "${tempPath}.%(ext)s" "${url}"`,
       { maxBuffer: 50 * 1024 * 1024 }
     );
 
