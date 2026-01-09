@@ -53,15 +53,15 @@ export default function Home() {
             >
               <polygon points="5 3 19 12 5 21 5 3" />
             </svg>
-            YouTube naar Audio
+            YouTube to Audio
           </div>
           <h1 className="text-5xl sm:text-6xl font-black tracking-tight">
             <span className="gradient-text">Beats</span>{" "}
             <span className="text-foreground">Downloader</span>
           </h1>
           <p className="text-lg text-muted-foreground max-w-md mx-auto">
-            Download je favoriete YouTube beats in hoge kwaliteit MP3 of WAV
-            formaat
+            Download your favorite YouTube beats in high quality MP3 or WAV
+            format
           </p>
         </div>
 
@@ -70,7 +70,7 @@ export default function Home() {
 
         {/* Footer */}
         <p className="text-center text-xs text-muted-foreground/50">
-          Gebruik deze tool alleen voor content waarvan je de rechten hebt
+          Use this tool only for content you have rights to
         </p>
       </div>
     </main>

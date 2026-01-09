@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     const { url } = body;
 
     if (!url) {
-      return NextResponse.json({ error: "URL is vereist" }, { status: 400 });
+      return NextResponse.json({ error: "URL is required" }, { status: 400 });
     }
 
     // Use yt-dlp to get video info as JSON
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Error fetching video info:", error);
     return NextResponse.json(
-      { error: "Kon video informatie niet ophalen" },
+      { error: "Could not fetch video information" },
       { status: 500 }
     );
   }

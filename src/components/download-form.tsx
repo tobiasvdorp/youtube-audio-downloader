@@ -18,8 +18,8 @@ const FORMAT_OPTIONS: {
   label: string;
   description: string;
 }[] = [
-  { value: "mp3", label: "MP3", description: "Universeel, klein bestand" },
-  { value: "wav", label: "WAV", description: "Lossless, groot bestand" },
+  { value: "mp3", label: "MP3", description: "Universal, small file" },
+  { value: "wav", label: "WAV", description: "Lossless, large file" },
 ];
 
 type DownloadFormProps = {
@@ -98,12 +98,12 @@ export function DownloadForm({ className }: DownloadFormProps) {
 
   const handleDownload = async () => {
     if (!url) {
-      setError("Voer een YouTube URL in");
+      setError("Enter a YouTube URL");
       return;
     }
 
     if (!isValidYoutubeUrl(url)) {
-      setError("Voer een geldige YouTube URL in");
+      setError("Enter a valid YouTube URL");
       return;
     }
 
@@ -120,12 +120,12 @@ export function DownloadForm({ className }: DownloadFormProps) {
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || "Download mislukt");
+        throw new Error(data.error || "Download failed");
       }
 
       const reader = response.body?.getReader();
       if (!reader) {
-        throw new Error("Stream niet beschikbaar");
+        throw new Error("Stream not available");
       }
 
       const decoder = new TextDecoder();
@@ -166,14 +166,14 @@ export function DownloadForm({ className }: DownloadFormProps) {
             }
 
             if (data.type === "error") {
-              throw new Error(data.error || "Download mislukt");
+              throw new Error(data.error || "Download failed");
             }
           }
         }
       }
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Er is een fout opgetreden"
+        err instanceof Error ? err.message : "An error occurred"
       );
     } finally {
       setIsLoading(false);
@@ -235,7 +235,7 @@ export function DownloadForm({ className }: DownloadFormProps) {
       {/* Format Selection */}
       <div className="space-y-3">
         <label className="text-sm font-medium text-muted-foreground">
-          Formaat
+          Format
         </label>
         <RadioGroup
           value={format}
@@ -310,8 +310,8 @@ export function DownloadForm({ className }: DownloadFormProps) {
               </div>
               <span>
                 {progress?.stage === "converting"
-                  ? "Converteren..."
-                  : "Downloaden..."}
+                  ? "Converting..."
+                  : "Downloading..."}
               </span>
             </div>
           ) : (
@@ -353,10 +353,10 @@ export function DownloadForm({ className }: DownloadFormProps) {
             <div className="flex justify-between text-xs text-muted-foreground">
               <span>
                 {progress.type === "complete"
-                  ? "✓ Voltooid!"
+                  ? "✓ Completed!"
                   : progress.stage === "converting"
-                    ? "Converteren naar " + format.toUpperCase()
-                    : "Downloaden..."}
+                    ? "Converting to " + format.toUpperCase()
+                    : "Downloading..."}
               </span>
               <div className="flex gap-3">
                 {progress.speed && (

@@ -57,14 +57,14 @@ export async function POST(request: NextRequest) {
 
     if (!url) {
       return new Response(
-        JSON.stringify({ type: "error", error: "URL is vereist" }),
+        JSON.stringify({ type: "error", error: "URL is required" }),
         { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
 
     if (!format || !["mp3", "wav"].includes(format)) {
       return new Response(
-        JSON.stringify({ type: "error", error: "Ongeldig formaat" }),
+        JSON.stringify({ type: "error", error: "Invalid format" }),
         { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
@@ -187,7 +187,7 @@ export async function POST(request: NextRequest) {
 
           sendProgress({
             type: "error",
-            error: "Download mislukt. Probeer het opnieuw.",
+            error: "Download failed. Please try again.",
           });
         }
 
@@ -208,7 +208,7 @@ export async function POST(request: NextRequest) {
     return new Response(
       JSON.stringify({
         type: "error",
-        error: "Download mislukt. Probeer het opnieuw.",
+        error: "Download failed. Please try again.",
       }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     );
