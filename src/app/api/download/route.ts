@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
 
     // Get video title first
     const { stdout: infoJson } = await execAsync(
-      `yt-dlp --js-runtimes nodejs --dump-json --no-download "${url}"`,
+      `yt-dlp --dump-json --no-download "${url}"`,
       { maxBuffer: 10 * 1024 * 1024 }
     );
     const info = JSON.parse(infoJson);
@@ -102,8 +102,6 @@ export async function POST(request: NextRequest) {
           // Start download with spawn to capture real-time progress
           await new Promise<void>((resolve, reject) => {
             const ytdlp = spawn("yt-dlp", [
-              "--js-runtimes",
-              "nodejs",
               "-f",
               "bestaudio",
               "--extract-audio",

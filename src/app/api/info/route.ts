@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
 
     // Use yt-dlp to get video info as JSON
     const { stdout } = await execAsync(
-      `yt-dlp --js-runtimes nodejs --dump-json --no-download "${url}"`,
+      `yt-dlp --dump-json --no-download "${url}"`,
       { maxBuffer: 10 * 1024 * 1024 }
     );
 

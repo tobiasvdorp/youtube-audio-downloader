@@ -21,9 +21,11 @@ RUN pnpm build
 # Production stage
 FROM node:20-alpine AS runner
 
-# Install ffmpeg and yt-dlp
-RUN apk add --no-cache ffmpeg python3 py3-pip \
-    && pip3 install --break-system-packages yt-dlp
+# Install ffmpeg, yt-dlp, and deno (required JS runtime for yt-dlp)
+RUN apk add --no-cache ffmpeg python3 py3-pip curl unzip \
+    && pip3 install --break-system-packages yt-dlp \
+    && curl -fsSL https://deno.land/install.sh | DENO_INSTALL=/usr/local sh \
+    && rm -rf /var/cache/apk/*
 
 # Install pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
