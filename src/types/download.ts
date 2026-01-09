@@ -17,3 +17,15 @@ export type VideoInfo = {
   duration: string;
   author: string;
 };
+
+export type DownloadProgress = {
+  type: "progress" | "complete" | "error";
+  percent?: number;
+  speed?: string;
+  eta?: string;
+  stage?: "downloading" | "converting";
+  error?: string;
+  data?: string; // base64 encoded audio data
+  filename?: string;
+  contentType?: string;
+};

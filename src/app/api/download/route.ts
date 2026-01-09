@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
-import { exec } from "child_process";
+import { NextRequest } from "next/server";
+import { spawn, exec } from "child_process";
 import { promisify } from "util";
 import { readFile, unlink, mkdir } from "fs/promises";
 import { join } from "path";
 import { randomUUID } from "crypto";
-import type { AudioFormat } from "@/types/download";
+import type { AudioFormat, DownloadProgress } from "@/types/download";
 
 const execAsync = promisify(exec);
 
@@ -13,6 +13,37 @@ function sanitizeFilename(filename: string): string {
     .replace(/[<>:"/\\|?*]/g, "")
     .replace(/\s+/g, "_")
     .substring(0, 100);
+}
+
+function parseProgress(line: string): Partial<DownloadProgress> | null {
+  // Parse yt-dlp progress output like: [download]  45.2% of 10.00MiB at  2.50MiB/s ETA 00:05
+  const downloadMatch = line.match(
+    /\[download\]\s+(\d+\.?\d*)%\s+of\s+[\d.]+\w+\s+at\s+([\d.]+\w+\/s)(?:\s+ETA\s+(\S+))?/
+  );
+  if (downloadMatch) {
+    return {
+      type: "progress",
+      percent: parseFloat(downloadMatch[1]),
+      speed: downloadMatch[2],
+      eta: downloadMatch[3] || undefined,
+      stage: "downloading",
+    };
+  }
+
+  // Parse conversion stage
+  if (
+    line.includes("[ExtractAudio]") ||
+    line.includes("[Postprocessor]") ||
+    line.includes("ffmpeg")
+  ) {
+    return {
+      type: "progress",
+      percent: 100,
+      stage: "converting",
+    };
+  }
+
+  return null;
 }
 
 export async function POST(request: NextRequest) {
@@ -25,11 +56,17 @@ export async function POST(request: NextRequest) {
     const { url, format } = body as { url: string; format: AudioFormat };
 
     if (!url) {
-      return NextResponse.json({ error: "URL is vereist" }, { status: 400 });
+      return new Response(
+        JSON.stringify({ type: "error", error: "URL is vereist" }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
     }
 
     if (!format || !["mp3", "wav", "m4a", "webm"].includes(format)) {
-      return NextResponse.json({ error: "Ongeldig formaat" }, { status: 400 });
+      return new Response(
+        JSON.stringify({ type: "error", error: "Ongeldig formaat" }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
     }
 
     // Create temp directory
@@ -43,21 +80,7 @@ export async function POST(request: NextRequest) {
     const info = JSON.parse(infoJson);
     const title = sanitizeFilename(info.title);
     const filename = `${title}.${format}`;
-
-    // Download and convert to temp file
-    // yt-dlp will add the extension automatically
     const outputPath = `${tempPath}.${format}`;
-
-    await execAsync(
-      `yt-dlp --js-runtimes nodejs -f bestaudio --extract-audio --audio-format ${format} --audio-quality 0 -o "${tempPath}.%(ext)s" "${url}"`,
-      { maxBuffer: 50 * 1024 * 1024 }
-    );
-
-    // Read the file
-    const audioData = await readFile(outputPath);
-
-    // Clean up temp file
-    await unlink(outputPath).catch(() => {});
 
     const contentTypes: Record<AudioFormat, string> = {
       mp3: "audio/mpeg",
@@ -67,26 +90,131 @@ export async function POST(request: NextRequest) {
     };
     const contentType = contentTypes[format];
 
-    return new NextResponse(audioData, {
+    // Create a readable stream for SSE
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      async start(controller) {
+        const sendProgress = (progress: DownloadProgress) => {
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify(progress)}\n\n`)
+          );
+        };
+
+        try {
+          // Start download with spawn to capture real-time progress
+          await new Promise<void>((resolve, reject) => {
+            const ytdlp = spawn("yt-dlp", [
+              "--js-runtimes",
+              "nodejs",
+              "-f",
+              "bestaudio",
+              "--extract-audio",
+              "--audio-format",
+              format,
+              "--audio-quality",
+              "0",
+              "--newline", // Force progress on new lines
+              "-o",
+              `${tempPath}.%(ext)s`,
+              url,
+            ]);
+
+            let lastPercent = 0;
+
+            ytdlp.stdout.on("data", (data: Buffer) => {
+              const lines = data.toString().split("\n");
+              for (const line of lines) {
+                const progress = parseProgress(line);
+                if (progress && progress.percent !== undefined) {
+                  // Only send updates every 2% to reduce noise
+                  if (
+                    progress.stage === "converting" ||
+                    progress.percent - lastPercent >= 2
+                  ) {
+                    lastPercent = progress.percent;
+                    sendProgress(progress as DownloadProgress);
+                  }
+                }
+              }
+            });
+
+            ytdlp.stderr.on("data", (data: Buffer) => {
+              const lines = data.toString().split("\n");
+              for (const line of lines) {
+                const progress = parseProgress(line);
+                if (progress && progress.percent !== undefined) {
+                  if (
+                    progress.stage === "converting" ||
+                    progress.percent - lastPercent >= 2
+                  ) {
+                    lastPercent = progress.percent;
+                    sendProgress(progress as DownloadProgress);
+                  }
+                }
+              }
+            });
+
+            ytdlp.on("close", (code) => {
+              if (code === 0) {
+                resolve();
+              } else {
+                reject(new Error(`yt-dlp exited with code ${code}`));
+              }
+            });
+
+            ytdlp.on("error", reject);
+          });
+
+          // Read the completed file and send as base64
+          const audioData = await readFile(outputPath);
+          const base64Data = audioData.toString("base64");
+
+          // Send completion with data
+          sendProgress({
+            type: "complete",
+            percent: 100,
+            data: base64Data,
+            filename,
+            contentType,
+          });
+
+          // Clean up temp file
+          await unlink(outputPath).catch(() => {});
+        } catch (error) {
+          console.error("Download error:", error);
+
+          // Clean up on error
+          await unlink(`${tempPath}.mp3`).catch(() => {});
+          await unlink(`${tempPath}.wav`).catch(() => {});
+          await unlink(`${tempPath}.m4a`).catch(() => {});
+          await unlink(`${tempPath}.webm`).catch(() => {});
+
+          sendProgress({
+            type: "error",
+            error: "Download mislukt. Probeer het opnieuw.",
+          });
+        }
+
+        controller.close();
+      },
+    });
+
+    return new Response(stream, {
       headers: {
-        "Content-Type": contentType,
-        "Content-Disposition": `attachment; filename="${filename}"`,
-        "Content-Length": audioData.length.toString(),
+        "Content-Type": "text/event-stream",
         "Cache-Control": "no-cache",
+        Connection: "keep-alive",
       },
     });
   } catch (error) {
     console.error("Download error:", error);
 
-    // Clean up on error
-    await unlink(`${tempPath}.mp3`).catch(() => {});
-    await unlink(`${tempPath}.wav`).catch(() => {});
-    await unlink(`${tempPath}.m4a`).catch(() => {});
-    await unlink(`${tempPath}.webm`).catch(() => {});
-
-    return NextResponse.json(
-      { error: "Download mislukt. Probeer het opnieuw." },
-      { status: 500 }
+    return new Response(
+      JSON.stringify({
+        type: "error",
+        error: "Download mislukt. Probeer het opnieuw.",
+      }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
 }

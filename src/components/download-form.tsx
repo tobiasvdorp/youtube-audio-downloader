@@ -5,8 +5,13 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-import type { AudioFormat, VideoInfo } from "@/types/download";
+import type {
+  AudioFormat,
+  VideoInfo,
+  DownloadProgress,
+} from "@/types/download";
 
 const FORMAT_OPTIONS: {
   value: AudioFormat;
@@ -30,6 +35,7 @@ export function DownloadForm({ className }: DownloadFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null);
   const [fetchingInfo, setFetchingInfo] = useState(false);
+  const [progress, setProgress] = useState<DownloadProgress | null>(null);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   const isValidYoutubeUrl = (testUrl: string) => {
@@ -105,6 +111,7 @@ export function DownloadForm({ className }: DownloadFormProps) {
 
     setIsLoading(true);
     setError(null);
+    setProgress({ type: "progress", percent: 0, stage: "downloading" });
 
     try {
       const response = await fetch("/api/download", {
@@ -118,27 +125,62 @@ export function DownloadForm({ className }: DownloadFormProps) {
         throw new Error(data.error || "Download mislukt");
       }
 
-      // Get filename from Content-Disposition header
-      const contentDisposition = response.headers.get("Content-Disposition");
-      const filenameMatch = contentDisposition?.match(/filename="(.+)"/);
-      const filename = filenameMatch ? filenameMatch[1] : `audio.${format}`;
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error("Stream niet beschikbaar");
+      }
 
-      // Download the file
-      const blob = await response.blob();
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = downloadUrl;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(downloadUrl);
-      document.body.removeChild(a);
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            const data = JSON.parse(line.slice(6)) as DownloadProgress;
+            setProgress(data);
+
+            if (data.type === "complete" && data.data) {
+              // Convert base64 to blob and download
+              const binaryString = atob(data.data);
+              const bytes = new Uint8Array(binaryString.length);
+              for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+              }
+              const blob = new Blob([bytes], {
+                type: data.contentType || "audio/mpeg",
+              });
+
+              const downloadUrl = window.URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = downloadUrl;
+              a.download = data.filename || `audio.${format}`;
+              document.body.appendChild(a);
+              a.click();
+              window.URL.revokeObjectURL(downloadUrl);
+              document.body.removeChild(a);
+            }
+
+            if (data.type === "error") {
+              throw new Error(data.error || "Download mislukt");
+            }
+          }
+        }
+      }
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Er is een fout opgetreden"
       );
     } finally {
       setIsLoading(false);
+      // Reset progress after a short delay
+      setTimeout(() => setProgress(null), 1500);
     }
   };
 
@@ -250,45 +292,89 @@ export function DownloadForm({ className }: DownloadFormProps) {
         </div>
       )}
 
-      {/* Download Button */}
-      <Button
-        onClick={handleDownload}
-        disabled={isLoading || !url}
-        className="w-full h-16 text-xl font-bold glow-primary transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:hover:scale-100"
-      >
-        {isLoading ? (
-          <div className="flex items-center gap-3">
-            <div className="flex items-end gap-1 h-6">
-              {[...Array(5)].map((_, i) => (
-                <div
-                  key={i}
-                  className="w-1 bg-primary-foreground rounded-full wave-bar"
-                  style={{ height: "100%" }}
-                />
-              ))}
+      {/* Download Button with Progress */}
+      <div className="space-y-3">
+        <Button
+          onClick={handleDownload}
+          disabled={isLoading || !url}
+          className="w-full h-16 text-xl font-bold glow-primary transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:hover:scale-100"
+        >
+          {isLoading ? (
+            <div className="flex items-center gap-3">
+              <div className="flex items-end gap-1 h-6">
+                {[...Array(5)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="w-1 bg-primary-foreground rounded-full wave-bar"
+                    style={{ height: "100%" }}
+                  />
+                ))}
+              </div>
+              <span>
+                {progress?.stage === "converting"
+                  ? "Converteren..."
+                  : "Downloaden..."}
+              </span>
             </div>
-            <span>Downloaden...</span>
-          </div>
-        ) : (
-          <div className="flex items-center gap-3">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="size-6"
-            >
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
-            <span>Download {format.toUpperCase()}</span>
+          ) : (
+            <div className="flex items-center gap-3">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="size-6"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              <span>Download {format.toUpperCase()}</span>
+            </div>
+          )}
+        </Button>
+
+        {/* Progress Bar */}
+        {progress && (
+          <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+            <Progress
+              value={progress.percent || 0}
+              className="h-3 bg-secondary/50"
+              indicatorClassName={cn({
+                "bg-linear-to-r from-primary to-primary/80":
+                  progress.stage === "downloading",
+                "bg-linear-to-r from-green-500 to-green-400":
+                  progress.type === "complete",
+                "bg-linear-to-r from-amber-500 to-amber-400":
+                  progress.stage === "converting",
+              })}
+            />
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>
+                {progress.type === "complete"
+                  ? "✓ Voltooid!"
+                  : progress.stage === "converting"
+                    ? "Converteren naar " + format.toUpperCase()
+                    : "Downloaden..."}
+              </span>
+              <div className="flex gap-3">
+                {progress.speed && (
+                  <span className="font-mono">{progress.speed}</span>
+                )}
+                {progress.eta && (
+                  <span className="font-mono">ETA: {progress.eta}</span>
+                )}
+                <span className="font-medium">
+                  {Math.round(progress.percent || 0)}%
+                </span>
+              </div>
+            </div>
           </div>
         )}
-      </Button>
+      </div>
     </div>
   );
 }
