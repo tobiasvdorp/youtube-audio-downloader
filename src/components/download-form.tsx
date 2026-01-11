@@ -204,7 +204,7 @@ export function DownloadForm({ className }: DownloadFormProps) {
         <RadioGroup
           value={format}
           onValueChange={(value) => setFormat(value as DownloadFormat)}
-          className="grid grid-cols-2 gap-3"
+          className="grid grid-cols-1 xs:grid-cols-2 gap-3"
         >
           {FORMAT_OPTIONS.map((option) => {
             const isSelected = format === option.value;
@@ -227,7 +227,7 @@ export function DownloadForm({ className }: DownloadFormProps) {
                 />
                 <div
                   className={cn(
-                    "size-10 rounded-lg flex items-center justify-center font-bold text-xs",
+                    "size-10 rounded-lg flex items-center justify-center font-bold text-xs aspect-square",
                     {
                       "bg-primary text-primary-foreground": isSelected,
                       "bg-muted text-muted-foreground": !isSelected,
