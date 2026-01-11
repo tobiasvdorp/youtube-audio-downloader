@@ -1,25 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Image from "next/image";
-import { useDebounceValue } from "usehooks-ts";
 import { list } from "radash";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Progress } from "@/components/ui/progress";
-import {
-  cn,
-  base64ToBlob,
-  isValidYoutubeUrl,
-  triggerDownload,
-} from "@/lib/utils";
-import type {
-  DownloadFormat,
-  VideoInfo,
-  DownloadProgress,
-} from "@/types/download";
+import { cn, isValidYoutubeUrl } from "@/lib/utils";
+import { useVideoInfo } from "@/hooks/useVideoInfo";
+import { useDownload } from "@/hooks/useDownload";
+import type { DownloadFormat } from "@/types/download";
 
 const FORMAT_OPTIONS: {
   value: DownloadFormat;
@@ -35,122 +27,25 @@ type DownloadFormProps = {
 };
 
 export function DownloadForm({ className }: DownloadFormProps) {
-  const [url, setUrl] = useState("");
-  const [debouncedUrl] = useDebounceValue(url, 500);
   const [format, setFormat] = useState<DownloadFormat>("mp3");
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null);
-  const [fetchingInfo, setFetchingInfo] = useState(false);
-  const [progress, setProgress] = useState<DownloadProgress | null>(null);
-
-  // Fetch video info when debounced URL changes
-  useEffect(() => {
-    if (!debouncedUrl || !isValidYoutubeUrl(debouncedUrl)) {
-      setVideoInfo(null);
-      return;
-    }
-
-    const fetchVideoInfo = async () => {
-      setFetchingInfo(true);
-      try {
-        const response = await fetch("/api/info", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url: debouncedUrl }),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setVideoInfo(data);
-          setError(null);
-        } else {
-          setVideoInfo(null);
-        }
-      } catch {
-        setVideoInfo(null);
-      } finally {
-        setFetchingInfo(false);
-      }
-    };
-
-    fetchVideoInfo();
-  }, [debouncedUrl]);
+  const { url, setUrl, videoInfo, isLoading: fetchingInfo } = useVideoInfo();
+  const { download, isLoading, progress, error, clearError } = useDownload();
 
   const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUrl(e.target.value);
-    setError(null);
+    clearError();
   };
 
   const handleDownload = async () => {
     if (!url) {
-      setError("Enter a YouTube URL");
       return;
     }
 
     if (!isValidYoutubeUrl(url)) {
-      setError("Enter a valid YouTube URL");
       return;
     }
 
-    setIsLoading(true);
-    setError(null);
-    setProgress({ type: "progress", percent: 0, stage: "downloading" });
-
-    try {
-      const response = await fetch("/api/download", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url, format }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Download failed");
-      }
-
-      const reader = response.body?.getReader();
-      if (!reader) {
-        throw new Error("Stream not available");
-      }
-
-      const decoder = new TextDecoder();
-      let buffer = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n\n");
-        buffer = lines.pop() || "";
-
-        for (const line of lines) {
-          if (line.startsWith("data: ")) {
-            const data = JSON.parse(line.slice(6)) as DownloadProgress;
-            setProgress(data);
-
-            if (data.type === "complete" && data.data) {
-              const blob = base64ToBlob(
-                data.data,
-                data.contentType || "audio/mpeg"
-              );
-              triggerDownload(blob, data.filename || `audio.${format}`);
-            }
-
-            if (data.type === "error") {
-              throw new Error(data.error || "Download failed");
-            }
-          }
-        }
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setIsLoading(false);
-      // Reset progress after a short delay
-      setTimeout(() => setProgress(null), 1500);
-    }
+    await download(url, format);
   };
 
   return (
