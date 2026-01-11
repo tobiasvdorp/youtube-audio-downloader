@@ -14,6 +14,18 @@ My friends and I were tired of those shady YouTube-to-MP3 websites — you know,
 - Clean, modern UI
 - No ads, no tracking, no BS
 
+## ⚠️ Legal Disclaimer
+
+This tool is intended **exclusively for legal use**. Please read and understand the following before using:
+
+- **Only download content you have rights to**: This tool should only be used for content you own, have created yourself, or that is explicitly licensed for reuse (e.g., Creative Commons, royalty-free content, or content where the creator has given explicit permission).
+
+- **Respect copyright laws**: Downloading copyrighted YouTube content without the permission of the copyright holder may violate applicable laws in your jurisdiction and is against [YouTube's Terms of Service](https://www.youtube.com/static?template=terms). You are solely responsible for ensuring your use complies with all applicable laws and regulations.
+
+- **No liability**: The developer(s) of this tool do not condone, encourage, or support the unauthorized downloading of copyrighted material. We assume no responsibility or liability for any misuse of this tool or any violations of copyright law by its users.
+
+By using this tool, you acknowledge that you understand and agree to these terms.
+
 ## Quick Start
 
 ### Using Docker (recommended)

@@ -1,5 +1,6 @@
 import { DownloadForm } from "@/components/download-form";
 import { WaveBars } from "@/components/wave-bars";
+import { Info, Play } from "lucide-react";
 
 export default function Home() {
   return (
@@ -20,18 +21,7 @@ export default function Home() {
         {/* Header */}
         <div className="text-center space-y-4">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full border border-primary/20 text-sm text-primary font-medium mb-4">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="size-4"
-            >
-              <polygon points="5 3 19 12 5 21 5 3" />
-            </svg>
+            <Play className="size-4" />
             YouTube to Audio
           </div>
           <h1 className="text-5xl sm:text-6xl font-black tracking-tight">
@@ -44,13 +34,19 @@ export default function Home() {
           </p>
         </div>
 
+        {/* Legal Notice */}
+        <div className="flex gap-3 p-4 bg-amber-500/10 rounded-xl border border-amber-500/20 text-sm">
+          <Info className="size-5 text-amber-500 shrink-0 mt-0.5" />
+          <p className="text-muted-foreground">
+            <span className="font-medium text-foreground">Legal use only.</span>{" "}
+            Use this tool only for content you own or that is licensed for reuse
+            (e.g. Creative Commons). You are responsible for respecting
+            copyright laws.
+          </p>
+        </div>
+
         {/* Download Form */}
         <DownloadForm />
-
-        {/* Footer */}
-        <p className="text-center text-xs text-muted-foreground/50">
-          Use this tool only for content you have rights to
-        </p>
       </div>
     </main>
   );
