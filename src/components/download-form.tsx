@@ -206,44 +206,45 @@ export function DownloadForm({ className }: DownloadFormProps) {
           onValueChange={(value) => setFormat(value as DownloadFormat)}
           className="grid grid-cols-2 gap-3"
         >
-          {FORMAT_OPTIONS.map((option) => (
-            <label
-              key={option.value}
-              htmlFor={`format-${option.value}`}
-              className={cn(
-                "flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all",
-                {
-                  "border-primary bg-primary/10": format === option.value,
-                  "border-border/50 bg-secondary/30 hover:border-border":
-                    format !== option.value,
-                }
-              )}
-            >
-              <RadioGroupItem
-                value={option.value}
-                id={`format-${option.value}`}
-                className="sr-only"
-              />
-              <div
+          {FORMAT_OPTIONS.map((option) => {
+            const isSelected = format === option.value;
+            return (
+              <label
+                key={option.value}
+                htmlFor={`format-${option.value}`}
                 className={cn(
-                  "size-10 rounded-lg flex items-center justify-center font-bold text-xs",
+                  "flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer select-none touch-manipulation [-webkit-tap-highlight-color:transparent]",
                   {
-                    "bg-primary text-primary-foreground":
-                      format === option.value,
-                    "bg-muted text-muted-foreground": format !== option.value,
+                    "border-primary bg-primary/10": isSelected,
+                    "border-border/50 bg-secondary/30": !isSelected,
                   }
                 )}
               >
-                {option.label}
-              </div>
-              <div className="text-left">
-                <p className="font-medium">{option.label}</p>
-                <p className="text-xs text-muted-foreground">
-                  {option.description}
-                </p>
-              </div>
-            </label>
-          ))}
+                <RadioGroupItem
+                  value={option.value}
+                  id={`format-${option.value}`}
+                  className="sr-only"
+                />
+                <div
+                  className={cn(
+                    "size-10 rounded-lg flex items-center justify-center font-bold text-xs",
+                    {
+                      "bg-primary text-primary-foreground": isSelected,
+                      "bg-muted text-muted-foreground": !isSelected,
+                    }
+                  )}
+                >
+                  {option.label}
+                </div>
+                <div className="text-left">
+                  <p className="font-medium">{option.label}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {option.description}
+                  </p>
+                </div>
+              </label>
+            );
+          })}
         </RadioGroup>
       </div>
 
