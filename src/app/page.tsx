@@ -34,6 +34,9 @@ export default function Home() {
           </p>
         </div>
 
+        {/* Download Form */}
+        <DownloadForm />
+
         {/* Legal Notice */}
         <div className="flex gap-3 p-4 bg-amber-500/10 rounded-xl border border-amber-500/20 text-sm">
           <Info className="size-5 text-amber-500 shrink-0 mt-0.5" />
@@ -44,9 +47,6 @@ export default function Home() {
             copyright laws.
           </p>
         </div>
-
-        {/* Download Form */}
-        <DownloadForm />
       </div>
     </main>
   );
