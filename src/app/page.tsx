@@ -1,10 +1,27 @@
+"use client";
+
+import { useState, useCallback } from "react";
 import { DownloadForm } from "@/components/download-form";
+import { RecentDownloadsSidebar } from "@/components/recent-downloads-sidebar";
 import { WaveBars } from "@/components/wave-bars";
-import { Info, Play } from "lucide-react";
+import { Github, Info, Play } from "lucide-react";
+import type { RecentDownload } from "@/types/download";
 
 export default function Home() {
+  const [selectedDownload, setSelectedDownload] = useState<RecentDownload | null>(null);
+  const [formKey, setFormKey] = useState(0);
+
+  const handleSelectDownload = useCallback((download: RecentDownload) => {
+    setSelectedDownload(download);
+    // Increment key to force DownloadForm to remount with new initial values
+    setFormKey((prev) => prev + 1);
+  }, []);
+
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden">
+      {/* Recent Downloads Sidebar */}
+      <RecentDownloadsSidebar onSelectDownload={handleSelectDownload} />
+
       {/* Background gradient effects */}
       <div className="absolute inset-0 -z-10">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-[128px]" />
@@ -34,8 +51,12 @@ export default function Home() {
           </p>
         </div>
 
-        {/* Download Form */}
-        <DownloadForm />
+        {/* Download Form - key forces remount when selecting recent download */}
+        <DownloadForm 
+          key={formKey}
+          initialUrl={selectedDownload?.url}
+          initialFormat={selectedDownload?.format}
+        />
 
         {/* Legal Notice */}
         <div className="flex gap-3 p-4 bg-amber-500/10 rounded-xl border border-amber-500/20 text-sm">
@@ -46,6 +67,19 @@ export default function Home() {
             (e.g. Creative Commons). You are responsible for respecting
             copyright laws.
           </p>
+        </div>
+
+        {/* GitHub Link */}
+        <div className="flex justify-center">
+          <a
+            href="https://github.com/tobiasvdorp/youtube-audio-downloader"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Github className="size-4" />
+            View on GitHub
+          </a>
         </div>
       </div>
     </main>
