@@ -21,9 +21,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "URL is required" }, { status: 400 });
     }
 
-    // Use yt-dlp to get video info as JSON
+    // Use yt-dlp to get video info as JSON (--no-playlist to avoid fetching entire playlists)
     const { stdout } = await execAsync(
-      `yt-dlp --dump-json --no-download "${url}"`,
+      `yt-dlp --no-playlist --dump-json --no-download "${url}"`,
       { maxBuffer: 10 * 1024 * 1024 }
     );
 

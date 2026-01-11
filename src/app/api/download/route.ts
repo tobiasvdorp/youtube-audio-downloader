@@ -72,9 +72,9 @@ export async function POST(request: NextRequest) {
     // Create temp directory
     await mkdir(tempDir, { recursive: true });
 
-    // Get video title first
+    // Get video title first (--no-playlist to avoid fetching entire playlists)
     const { stdout: infoJson } = await execAsync(
-      `yt-dlp --dump-json --no-download "${url}"`,
+      `yt-dlp --no-playlist --dump-json --no-download "${url}"`,
       { maxBuffer: 10 * 1024 * 1024 }
     );
     const info = JSON.parse(infoJson);
@@ -102,6 +102,7 @@ export async function POST(request: NextRequest) {
           // Start download with spawn to capture real-time progress
           await new Promise<void>((resolve, reject) => {
             const ytdlp = spawn("yt-dlp", [
+              "--no-playlist",
               "-f",
               "bestaudio",
               "--extract-audio",
