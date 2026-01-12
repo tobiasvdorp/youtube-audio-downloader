@@ -166,7 +166,7 @@ export function DownloadForm({ className }: DownloadFormProps) {
       <div className="space-y-3">
         <Button
           onClick={handleDownload}
-          disabled={isLoading || !url}
+          disabled={isLoading || !url || !videoInfo || fetchingInfo}
           className="w-full h-16 text-xl font-bold glow-primary transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:hover:scale-100"
         >
           {isLoading ? (
@@ -185,6 +185,11 @@ export function DownloadForm({ className }: DownloadFormProps) {
                   ? "Converting..."
                   : "Downloading..."}
               </span>
+            </div>
+          ) : fetchingInfo ? (
+            <div className="flex items-center gap-3">
+              <div className="size-6 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+              <span>Loading video info...</span>
             </div>
           ) : (
             <div className="flex items-center gap-3">
