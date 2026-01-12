@@ -11,6 +11,7 @@ My friends and I were tired of those shady YouTube-to-MP3 websites — you know,
 - Download YouTube audio in **MP3** or **WAV** format
 - Real-time download progress
 - Video preview before downloading
+- Recent downloads history — quickly re-download previous videos
 - Clean, modern UI
 - No ads, no tracking, no BS
 
@@ -58,6 +59,7 @@ pnpm dev
 - Next.js 16
 - React 19
 - Tailwind CSS
+- Zustand + usehooks-ts
 - yt-dlp + ffmpeg for audio extraction
 
 ## License
