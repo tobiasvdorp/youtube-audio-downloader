@@ -29,6 +29,8 @@ export async function POST(request: NextRequest) {
 
     const info: YtDlpInfo = JSON.parse(stdout);
 
+    console.log(`[Info] Lookup: "${info.title}" by ${info.uploader}`);
+
     return NextResponse.json({
       title: info.title,
       thumbnail: info.thumbnail,

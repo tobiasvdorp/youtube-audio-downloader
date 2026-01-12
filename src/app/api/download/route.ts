@@ -82,6 +82,10 @@ export async function POST(request: NextRequest) {
     const filename = `${title}.${format}`;
     const outputPath = `${tempPath}.${format}`;
 
+    console.log(
+      `[Download] "${info.title}" as ${format.toUpperCase()} | Channel: ${info.uploader || "Unknown"} | URL: ${url}`
+    );
+
     const contentTypes: Record<DownloadFormat, string> = {
       mp3: "audio/mpeg",
       wav: "audio/wav",
