@@ -2,6 +2,7 @@
 
 import { DownloadForm } from "@/components/download-form";
 import { RecentDownloadsSidebar } from "@/components/recent-downloads-sidebar";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { WaveBars } from "@/components/wave-bars";
 import { Github, Info, Play } from "lucide-react";
 import { useSelectedDownload } from "@/hooks/useSelectedDownload";
@@ -11,8 +12,11 @@ export default function Home() {
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden">
-      {/* Recent Downloads Sidebar */}
-      <RecentDownloadsSidebar />
+      {/* Top right controls */}
+      <div className="fixed top-3 right-3 xs:top-6 xs:right-6 z-40 flex flex-col-reverse xs:flex-row items-center gap-2 xs:gap-3">
+        <ThemeToggle />
+        <RecentDownloadsSidebar />
+      </div>
 
       {/* Background gradient effects */}
       <div className="absolute inset-0 -z-10">

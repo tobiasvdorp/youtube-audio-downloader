@@ -52,16 +52,13 @@ export function RecentDownloadsSidebar() {
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <Button
-          variant="outline"
-          size="icon"
-          className={cn(
-            "fixed top-6 right-6 z-40 size-12 rounded-full border-2 border-border/50 bg-background/80 backdrop-blur-sm transition-all hover:scale-105 hover:border-primary/50 hover:bg-primary/10",
-            {
-              "border-primary/50 bg-primary/10": recentDownloads.length > 0,
-            }
-          )}
+          variant="floating"
+          size="icon-floating"
+          className={cn({
+            "border-primary/50 bg-primary/10": recentDownloads.length > 0,
+          })}
         >
-          <History className="size-5" />
+          <History />
           {recentDownloads.length > 0 && (
             <span className="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
               {recentDownloads.length}
