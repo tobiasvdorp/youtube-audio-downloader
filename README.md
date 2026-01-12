@@ -1,4 +1,4 @@
-# Beats Downloader
+# YouTube Audio Downloader
 
 A simple, no-nonsense YouTube audio downloader. Paste a link, pick a format, download your audio.
 
