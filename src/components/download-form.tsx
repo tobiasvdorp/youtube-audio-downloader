@@ -11,7 +11,10 @@ import { Progress } from "@/components/ui/progress";
 import { cn, isValidYoutubeUrl } from "@/lib/utils";
 import { useVideoInfo } from "@/hooks/useVideoInfo";
 import { useDownload } from "@/hooks/useDownload";
+import { useRecentDownloadsStore } from "@/hooks/useRecentDownloads";
+import { useSelectedDownload } from "@/hooks/useSelectedDownload";
 import type { DownloadFormat } from "@/types/download";
+import { Download } from "lucide-react";
 
 const FORMAT_OPTIONS: {
   value: DownloadFormat;
@@ -27,25 +30,31 @@ type DownloadFormProps = {
 };
 
 export function DownloadForm({ className }: DownloadFormProps) {
-  const [format, setFormat] = useState<DownloadFormat>("mp3");
-  const { url, setUrl, videoInfo, isLoading: fetchingInfo } = useVideoInfo();
+  const selectedDownload = useSelectedDownload(
+    (state) => state.selectedDownload
+  );
+  const addDownload = useRecentDownloadsStore((state) => state.addDownload);
+  const [format, setFormat] = useState<DownloadFormat>(
+    selectedDownload?.format ?? "mp3"
+  );
+
+  const {
+    url,
+    setUrl,
+    videoInfo,
+    isLoading: fetchingInfo,
+  } = useVideoInfo(selectedDownload?.url);
   const { download, isLoading, progress, error, clearError } = useDownload();
 
-  const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setUrl(e.target.value);
-    clearError();
-  };
-
   const handleDownload = async () => {
-    if (!url) {
-      return;
-    }
+    if (!url || !isValidYoutubeUrl(url)) return;
 
-    if (!isValidYoutubeUrl(url)) {
-      return;
-    }
+    const success = await download(url, format);
 
-    await download(url, format);
+    // Save to recent downloads on successful download
+    if (success && videoInfo) {
+      addDownload(videoInfo, url, format);
+    }
   };
 
   return (
@@ -59,7 +68,10 @@ export function DownloadForm({ className }: DownloadFormProps) {
             type="url"
             placeholder="https://www.youtube.com/watch?v=..."
             value={url}
-            onChange={handleUrlChange}
+            onChange={(e) => {
+              setUrl(e.target.value);
+              clearError();
+            }}
             className="pr-12"
           />
           {fetchingInfo && (
@@ -176,20 +188,7 @@ export function DownloadForm({ className }: DownloadFormProps) {
             </div>
           ) : (
             <div className="flex items-center gap-3">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="size-6"
-              >
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="7 10 12 15 17 10" />
-                <line x1="12" y1="15" x2="12" y2="3" />
-              </svg>
+              <Download className="size-6" />
               <span>Download {format.toUpperCase()}</span>
             </div>
           )}

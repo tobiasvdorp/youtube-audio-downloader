@@ -29,3 +29,10 @@ export type DownloadProgress = {
   filename?: string;
   contentType?: string;
 };
+
+export type RecentDownload = VideoInfo & {
+  id: string;
+  url: string;
+  format: DownloadFormat;
+  downloadedAt: string;
+};

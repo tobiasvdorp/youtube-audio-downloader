@@ -1,26 +1,18 @@
 "use client";
 
-import { useState, useCallback } from "react";
 import { DownloadForm } from "@/components/download-form";
 import { RecentDownloadsSidebar } from "@/components/recent-downloads-sidebar";
 import { WaveBars } from "@/components/wave-bars";
 import { Github, Info, Play } from "lucide-react";
-import type { RecentDownload } from "@/types/download";
+import { useSelectedDownload } from "@/hooks/useSelectedDownload";
 
 export default function Home() {
-  const [selectedDownload, setSelectedDownload] = useState<RecentDownload | null>(null);
-  const [formKey, setFormKey] = useState(0);
-
-  const handleSelectDownload = useCallback((download: RecentDownload) => {
-    setSelectedDownload(download);
-    // Increment key to force DownloadForm to remount with new initial values
-    setFormKey((prev) => prev + 1);
-  }, []);
+  const formKey = useSelectedDownload((state) => state.formKey);
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden">
       {/* Recent Downloads Sidebar */}
-      <RecentDownloadsSidebar onSelectDownload={handleSelectDownload} />
+      <RecentDownloadsSidebar />
 
       {/* Background gradient effects */}
       <div className="absolute inset-0 -z-10">
@@ -52,11 +44,7 @@ export default function Home() {
         </div>
 
         {/* Download Form - key forces remount when selecting recent download */}
-        <DownloadForm 
-          key={formKey}
-          initialUrl={selectedDownload?.url}
-          initialFormat={selectedDownload?.format}
-        />
+        <DownloadForm key={formKey} />
 
         {/* Legal Notice */}
         <div className="flex gap-3 p-4 bg-amber-500/10 rounded-xl border border-amber-500/20 text-sm">

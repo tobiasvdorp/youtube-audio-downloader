@@ -13,8 +13,11 @@ type UseVideoInfoReturn = {
   isValidUrl: boolean;
 };
 
-export function useVideoInfo(debounceMs = 500): UseVideoInfoReturn {
-  const [url, setUrl] = useState("");
+export function useVideoInfo(
+  initialUrl = "",
+  debounceMs = 500
+): UseVideoInfoReturn {
+  const [url, setUrl] = useState(initialUrl);
   const [debouncedUrl] = useDebounceValue(url, debounceMs);
   const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null);
   const [isLoading, setIsLoading] = useState(false);
