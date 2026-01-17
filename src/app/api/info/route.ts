@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { exec } from "child_process";
 import { promisify } from "util";
 import { formatDuration } from "@/lib/utils";
+import { getCookiesFlag } from "@/lib/yt-dlp";
 
 const execAsync = promisify(exec);
 
@@ -22,8 +23,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Use yt-dlp to get video info as JSON (--no-playlist to avoid fetching entire playlists)
+    const cookiesFlag = getCookiesFlag();
     const { stdout } = await execAsync(
-      `yt-dlp --no-playlist --dump-json --no-download "${url}"`,
+      `yt-dlp ${cookiesFlag} --no-playlist --dump-json --no-download "${url}"`,
       { maxBuffer: 10 * 1024 * 1024 }
     );
 

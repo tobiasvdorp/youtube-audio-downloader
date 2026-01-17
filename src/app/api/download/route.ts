@@ -5,6 +5,7 @@ import { readFile, unlink, mkdir } from "fs/promises";
 import { join } from "path";
 import { randomUUID } from "crypto";
 import type { DownloadFormat, DownloadProgress } from "@/types/download";
+import { getCookiesArgs, getCookiesFlag } from "@/lib/yt-dlp";
 
 const execAsync = promisify(exec);
 
@@ -73,8 +74,9 @@ export async function POST(request: NextRequest) {
     await mkdir(tempDir, { recursive: true });
 
     // Get video title first (--no-playlist to avoid fetching entire playlists)
+    const cookiesFlag = getCookiesFlag();
     const { stdout: infoJson } = await execAsync(
-      `yt-dlp --no-playlist --dump-json --no-download "${url}"`,
+      `yt-dlp ${cookiesFlag} --no-playlist --dump-json --no-download "${url}"`,
       { maxBuffer: 10 * 1024 * 1024 }
     );
     const info = JSON.parse(infoJson);
@@ -106,6 +108,7 @@ export async function POST(request: NextRequest) {
           // Start download with spawn to capture real-time progress
           await new Promise<void>((resolve, reject) => {
             const ytdlp = spawn("yt-dlp", [
+              ...getCookiesArgs(),
               "--no-playlist",
               "-f",
               "bestaudio",
@@ -121,6 +124,7 @@ export async function POST(request: NextRequest) {
             ]);
 
             let lastPercent = 0;
+            let stderrOutput = "";
 
             ytdlp.stdout.on("data", (data: Buffer) => {
               const lines = data.toString().split("\n");
@@ -140,7 +144,11 @@ export async function POST(request: NextRequest) {
             });
 
             ytdlp.stderr.on("data", (data: Buffer) => {
-              const lines = data.toString().split("\n");
+              const output = data.toString();
+              stderrOutput += output;
+              console.error("[yt-dlp stderr]", output);
+
+              const lines = output.split("\n");
               for (const line of lines) {
                 const progress = parseProgress(line);
                 if (progress && progress.percent !== undefined) {
@@ -159,7 +167,13 @@ export async function POST(request: NextRequest) {
               if (code === 0) {
                 resolve();
               } else {
-                reject(new Error(`yt-dlp exited with code ${code}`));
+                console.error(`[yt-dlp] Exited with code ${code}`);
+                console.error("[yt-dlp] Full stderr:", stderrOutput);
+                reject(
+                  new Error(
+                    `yt-dlp failed: ${stderrOutput || `exit code ${code}`}`
+                  )
+                );
               }
             });
 

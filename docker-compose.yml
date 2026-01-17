@@ -5,3 +5,4 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
+      - YT_COOKIES_BASE64=${YT_COOKIES_BASE64:?YT_COOKIES_BASE64 is required - see README.md for instructions}

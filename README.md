@@ -37,6 +37,40 @@ docker compose up --build
 
 The app will be available at `http://localhost:3000`.
 
+### YouTube Authentication (Important!)
+
+YouTube may require authentication to prevent bot detection. If you see a "Sign in to confirm you're not a bot" error, you need to export your YouTube cookies:
+
+1. **Install a browser extension** to export cookies:
+
+   - Chrome: [Get cookies.txt LOCALLY](https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc)
+   - Firefox: [cookies.txt](https://addons.mozilla.org/en-US/firefox/addon/cookies-txt/)
+
+2. **Export cookies from an incognito window** (recommended for longer-lasting cookies):
+
+   - Open an incognito/private browser window
+   - Go to YouTube and log in
+   - Keep only one tab open (e.g., `https://www.youtube.com/robots.txt`)
+   - Use the extension to export cookies
+   - Close the incognito window immediately after exporting
+
+3. **Convert to base64 and set as environment variable:**
+
+```bash
+# Convert and copy to clipboard (macOS)
+cat cookies.txt | base64 | pbcopy
+
+# Or just output to terminal
+cat cookies.txt | base64
+```
+
+4. **Set the `YT_COOKIES_BASE64` environment variable:**
+   - **Docker:** Add to `.env` file in project root
+   - **Railway/Render:** Add in the dashboard under Variables
+   - **Local dev:** Export in your shell or add to `.env`
+
+> ⚠️ **Never commit cookies** — `.env` and `cookies.txt` are excluded via `.gitignore`
+
 ### Local Development
 
 **Prerequisites:**

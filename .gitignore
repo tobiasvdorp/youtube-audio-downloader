@@ -32,6 +32,10 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
+
+# YouTube cookies (contains sensitive session data)
+cookies.txt
 
 # vercel
 .vercel
